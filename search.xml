@@ -2072,4 +2072,40 @@ abs(10);
         <tag>面试</tag>
       </tags>
   </entry>
+  <entry>
+    <title>多线程常用API解析</title>
+    <url>/2020/04/25/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%B8%B8%E7%94%A8API%E8%A7%A3%E6%9E%90/</url>
+    <content><![CDATA[<h1 id="多线程常用API解析"><a href="#多线程常用API解析" class="headerlink" title="多线程常用API解析"></a>多线程常用API解析</h1><blockquote>
+<p>CountDownLunch、CyclicBarrier、Semaphore</p>
+</blockquote>
+<h2 id="CountDownLunch"><a href="#CountDownLunch" class="headerlink" title="CountDownLunch"></a>CountDownLunch</h2><p>字面意思：count 计数，Down 向下， Lunch 午餐？ 我认为是Launch 发射的简写吧。</p>
+<p>直接理解：给CountDownLunch一个数（count），每执行一个线程就向下减1，直到减为0时，执行CountDownLunch后面的内容。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">CountDownLatch countDownLatch = <span class="keyword">new</span> CountDownLatch(<span class="number">5</span>);</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">5</span>; i++) &#123;</span><br><span class="line">    <span class="keyword">int</span> finalI = i;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        Thread.sleep(<span class="number">2000</span>);</span><br><span class="line">        countDownLatch.countDown();</span><br><span class="line">    &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">new</span> Thread(()-&gt;&#123;</span><br><span class="line">        System.out.println(finalI +<span class="string">&quot;号线程已启动&quot;</span>);</span><br><span class="line">    &#125;,String.valueOf(i)).start();</span><br><span class="line">&#125;</span><br><span class="line">countDownLatch.await();</span><br><span class="line">Thread.sleep(<span class="number">1000</span>);</span><br><span class="line">System.out.println(<span class="string">&quot;5条线程执行完毕&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<p>执行结果</p>
+<blockquote>
+<p> 0号线程已启动<br>1号线程已启动<br>2号线程已启动<br>3号线程已启动<br>4号线程已启动<br>5条线程执行完毕</p>
+</blockquote>
+<h2 id="CyclicBarrier"><a href="#CyclicBarrier" class="headerlink" title="CyclicBarrier"></a>CyclicBarrier</h2><p>CyclicBarrier与CountDownLunch相反，后者做减法，前者做加法。</p>
+<p>当线程数达到指定数值时，执行CyclicBarrier中的内容，CyclicBarrier提供了Runnable接口用于填写要输出的内容。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">CyclicBarrier cyclicBarrier = <span class="keyword">new</span> CyclicBarrier(<span class="number">3</span>, () -&gt; &#123;</span><br><span class="line">           System.out.println(<span class="string">&quot;已经运行了三个线程&quot;</span>);</span><br><span class="line">       &#125;);</span><br><span class="line">       <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">3</span>; i++) &#123;</span><br><span class="line">           <span class="keyword">try</span> &#123;</span><br><span class="line">               Thread.sleep(<span class="number">2000</span>);</span><br><span class="line">           &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">               e.printStackTrace();</span><br><span class="line">           &#125;</span><br><span class="line">           <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">               System.out.println(Thread.currentThread().getName());</span><br><span class="line">               <span class="keyword">try</span> &#123;</span><br><span class="line">                   cyclicBarrier.await();</span><br><span class="line">               &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                   e.printStackTrace();</span><br><span class="line">               &#125; <span class="keyword">catch</span> (BrokenBarrierException e)  &#123;</span><br><span class="line">                   e.printStackTrace();</span><br><span class="line">               &#125;</span><br><span class="line">           &#125;, String.valueOf(i)).start();</span><br><span class="line">       &#125;</span><br></pre></td></tr></table></figure>
+
+<p>执行结果</p>
+<blockquote>
+<p>0<br>1<br>2<br>已经运行了三个线程</p>
+</blockquote>
+<h2 id="Semaphore"><a href="#Semaphore" class="headerlink" title="Semaphore"></a>Semaphore</h2><p>字面意思：信号量</p>
+<p>直接理解：Semaphore控制当前正在运行的线程数，当Semaphore为1时，和Synchorize和ReentrantLock相同，且Semaphore也可以设置为公平或者非公平。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">Semaphore semaphore = <span class="keyword">new</span> Semaphore(<span class="number">3</span>);</span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">6</span>; i++) &#123;</span><br><span class="line">    <span class="keyword">int</span> finalI = i;</span><br><span class="line">    <span class="keyword">new</span> Thread(()-&gt;&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            semaphore.acquire();</span><br><span class="line">            System.out.println(finalI +<span class="string">&quot;号线程进入Semaphore&quot;</span>);</span><br><span class="line">            Thread.sleep(<span class="number">1000</span>);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;<span class="keyword">finally</span> &#123;</span><br><span class="line">            semaphore.release();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;,String.valueOf(i)).start();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>三种方法用于控制不同需求下的线程数量，保证程序的稳定运行。</p>
+]]></content>
+      <categories>
+        <category>Java</category>
+      </categories>
+      <tags>
+        <tag>多线程</tag>
+      </tags>
+  </entry>
 </search>
